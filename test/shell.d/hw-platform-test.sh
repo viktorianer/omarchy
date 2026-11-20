@@ -105,6 +105,17 @@ write_tree() {
   printf '%s\0' "$@" >"$file"
 }
 
+write_chosen() {
+  local case_dir="$test_tmp/cases/$1" dir
+  if [[ $2 == "proc" ]]; then
+    dir="$case_dir/proc/device-tree/chosen"
+  else
+    dir="$case_dir/sys/firmware/devicetree/base/chosen"
+  fi
+  mkdir -p "$dir"
+  printf '%s\0' "$4" >"$dir/$3"
+}
+
 expect() {
   local name="$1" machine="$2" expected="$3" description="$4" actual
   actual=$(detect "$name" "$machine") || fail "$description" "$(cat "$test_tmp/error")"
@@ -144,6 +155,14 @@ expect raspberry-pi aarch64 aarch64 "a Raspberry Pi is plain aarch64"
 expect acpi aarch64 aarch64 "an aarch64 machine without a device tree is plain aarch64"
 expect acpi x86_64 x86 "an x86 machine without a device tree is x86"
 pass "unknown aarch64 and x86 machines need no family"
+
+write_tree gta2xl proc samsung,gta2xlwifi qcom,sdm450
+write_chosen gta2xl proc lk2nd,version 23.1
+write_tree gta2xl-sysfs sys samsung,gta2xlwifi qcom,sdm450
+write_chosen gta2xl-sysfs sys lk2nd,version 23.1
+expect gta2xl aarch64 aarch64 "an lk2nd tablet is no Snapdragon laptop"
+expect gta2xl-sysfs aarch64 aarch64 "sysfs shows lk2nd's marker without /proc/device-tree"
+pass "a Qualcomm board that lk2nd booted is plain aarch64"
 
 # Only a token's vendor prefix identifies the board; the old detector matched
 # "apple," anywhere in the file.

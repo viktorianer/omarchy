@@ -168,8 +168,11 @@ fi
 
 vendor=""
 vendor_source=""
+lk2nd=0
 for source in "${sources[@]}"; do
   [[ -r $source ]] || continue
+
+  [[ -e ${source%/compatible}/chosen/lk2nd,version ]] && lk2nd=1
 
   apple=0
   qcom=0
@@ -248,6 +251,8 @@ case $vendor in
     [[ $machine == "aarch64" ]] || contradiction "$vendor_source names $vendor hardware but the CPU is $machine"
     if [[ $vendor == "apple" ]]; then
       echo aarch64-apple
+    elif (( lk2nd )); then
+      echo aarch64
     else
       echo aarch64-qualcomm
     fi
