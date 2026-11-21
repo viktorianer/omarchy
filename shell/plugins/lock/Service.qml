@@ -6,6 +6,7 @@ import Quickshell.Wayland
 import qs.Commons
 import qs.Commons as Commons
 import "FingerprintModel.js" as FingerprintModel
+import "KeypadModel.js" as KeypadModel
 
 Item {
   id: root
@@ -59,6 +60,7 @@ Item {
   property string lastEvent: "init"
   property string lastEventAt: ""
   readonly property bool videoBackground: Util.isVideoPath(backgroundPath)
+  readonly property bool keypadEnabled: KeypadModel.enabledIn(shell && shell.shellConfig)
   property bool strandedLock: false
   property bool strandedLockResolved: false
 
@@ -518,6 +520,7 @@ Item {
         failedAttempts: root.failedAttempts
         inputEnabled: root.lockRequested
         loadBackground: root.locked
+        keypadEnabled: root.keypadEnabled
         passwordText: root.enteredPassword
         onPasswordTextEdited: function(password) { root.enteredPassword = password }
         onSubmitPassword: function(password) { root.submitPassword(password) }
@@ -554,6 +557,7 @@ Item {
       failedAttempts: 0
       inputEnabled: false
       loadBackground: root.previewVisible
+      keypadEnabled: root.keypadEnabled
       passwordText: ""
     }
 

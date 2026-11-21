@@ -78,3 +78,5 @@ automatically. If a change somehow fails to apply, force a reload with
 Set `idle.screensaver` and `idle.lock` in `~/.config/omarchy/shell.json`,
 in seconds since user idle began. Example: "lock after ten minutes" means
 setting `idle.lock` to `600`.
+
+Set `lock.keypad` to `true` for an on-screen keypad on the lock screen, for touch screens with no keyboard.
