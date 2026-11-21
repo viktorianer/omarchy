@@ -19,11 +19,13 @@ Item {
   property bool loadBackground: true
   property string passwordText: ""
   property bool syncingPasswordText: false
+  property bool keypadEnabled: false
 
   readonly property string placeholderText: Commons.I18n.t("lock.enterPassword")
   readonly property int fieldWidth: 381
   readonly property int fieldHeight: 67
   readonly property int outlineThickness: 3
+  readonly property int keypadGap: 24
   readonly property int fieldFontSize: Math.round(Style.font.heading * 1.125)
   readonly property int passwordDotFontSize: Math.round(Style.font.heading * 1.33)
   readonly property int passwordDotLetterSpacing: Math.round(Style.font.heading * 0.19)
@@ -55,6 +57,12 @@ Item {
 
   function clearPassword() {
     passwordTextEdited("")
+  }
+
+  function submitEnteredPassword() {
+    var submitted = passwordText
+    passwordTextEdited("")
+    if (submitted.length > 0) submitPassword(submitted)
   }
 
   // Waking a DPMS-blanked display can stall the compositor for seconds while
@@ -144,6 +152,7 @@ Item {
       width: root.fieldWidth
       height: root.fieldHeight
       anchors.centerIn: parent
+      anchors.verticalCenterOffset: keypad.visible ? -(root.keypadGap + keypad.height + (fingerprintNotice.visible ? fingerprintNotice.height + fingerprintNotice.anchors.topMargin : 0)) / 2 : 0
       color: Commons.Color.lock.background
       borderSpec: root.inputBorderSpec
       radius: Style.cornerRadius
@@ -151,6 +160,7 @@ Item {
 
       TextInput {
         id: passwordInput
+        objectName: "lockPasswordInput"
         anchors.fill: parent
         anchors.topMargin: inputField.borderTop
         // Reserve the fingerprint icon's width on both sides so the centered
@@ -188,11 +198,7 @@ Item {
           if (text.length > 0 && root.failureMessage.length > 0) root.clearFailureRequested()
         }
 
-        onAccepted: {
-          var submitted = root.passwordText
-          root.passwordTextEdited("")
-          if (submitted.length > 0) root.submitPassword(submitted)
-        }
+        onAccepted: root.submitEnteredPassword()
 
         Keys.onPressed: function(event) {
           root.wakeRequested()
@@ -247,6 +253,7 @@ Item {
     // is not intuitive that it signals a broken reader — so the words carry the
     // explanation and the icon only reinforces it.
     Text {
+      id: fingerprintNotice
       objectName: "fingerprintUnavailableNotice"
       textFormat: Text.PlainText
       anchors.top: inputField.bottom
@@ -259,6 +266,27 @@ Item {
       font.pixelSize: Style.font.heading
       font.italic: true
       horizontalAlignment: Text.AlignHCenter
+    }
+
+    Keypad {
+      id: keypad
+      visible: root.keypadEnabled
+      enabled: passwordInput.enabled
+      width: Math.min(parent.width - 2 * root.keypadGap, keypad.keyLayer !== "digits" ? Math.round(root.fieldWidth * 1.6) : root.fieldWidth)
+      height: keypad.implicitHeight
+      anchors.top: fingerprintNotice.visible ? fingerprintNotice.bottom : inputField.bottom
+      anchors.topMargin: root.keypadGap
+      anchors.horizontalCenter: inputField.horizontalCenter
+      onTapped: root.wakeRequested()
+      onTyped: function(text) {
+        if (passwordInput.selectedText.length > 0) passwordInput.remove(passwordInput.selectionStart, passwordInput.selectionEnd)
+        passwordInput.insert(passwordInput.cursorPosition, text)
+      }
+      onErased: {
+        if (passwordInput.selectedText.length > 0) passwordInput.remove(passwordInput.selectionStart, passwordInput.selectionEnd)
+        else if (passwordInput.cursorPosition > 0) passwordInput.remove(passwordInput.cursorPosition - 1, passwordInput.cursorPosition)
+      }
+      onSubmitted: root.submitEnteredPassword()
     }
   }
 }
